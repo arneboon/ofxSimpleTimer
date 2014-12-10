@@ -11,23 +11,40 @@
 
 #include "ofxSimpleTimer.h"
 
-void ofxSimpleTimer::setup ( unsigned long delayInMillis, string _name , int _eventId )
-{
-    startTimeMillis = 0.0f ;
-    delayMillis = delayInMillis ;
-	name = _name ;
-	eventId = _eventId ;
-
+//----------------------------------------------------------------------------
+void ofxSimpleTimer::setup(unsigned long delayInMillis, string _name) {
+    startTimeMillis = 0.0f;
+    delayMillis = delayInMillis;
+	name = _name;
 }
-void ofxSimpleTimer::reset(){
+
+//----------------------------------------------------------------------------
+void ofxSimpleTimer::setup(unsigned long delayInMillis, ArgsTimer _argsTimer, string _name) {
+    argsTimer.floats.clear();
+    argsTimer.ints.clear();
+    argsTimer.bools.clear();
+    argsTimer.strings.clear();
+    
+    argsTimer = _argsTimer;
+    
+    this->setup(delayInMillis, _name);
+}
+
+//----------------------------------------------------------------------------
+void ofxSimpleTimer::reset() {
 	startTimeMillis = 0.0f ;
     bIsRunning = false ;
 	bIsPaused = false;
+    
+    argsTimer.floats.clear();
+    argsTimer.ints.clear();
+    argsTimer.bools.clear();
+    argsTimer.strings.clear();
 }
-void ofxSimpleTimer::update( )
-{
-    if ( bIsRunning == true )
-    {
+
+//----------------------------------------------------------------------------
+void ofxSimpleTimer::update() {
+    if ( bIsRunning == true ) {
 		if (bIsPaused)
 			startTimeMillis = ofGetElapsedTimeMillis() - pauseTimeOffset;
         //calculate
@@ -38,15 +55,13 @@ void ofxSimpleTimer::update( )
             if ( bLoop == true )
                 start( bLoop ) ;
             
-            int args = 18 ;
-            ofNotifyEvent( TIMER_COMPLETE , args ) ; 
+            ofNotifyEvent( TIMER_COMPLETE , argsTimer ) ;
         }
     }
-
 }
 
-void ofxSimpleTimer::draw( float x , float y )
-{
+//----------------------------------------------------------------------------
+void ofxSimpleTimer::draw( float x , float y ) {
     string debugString = "" ;
     if ( bIsRunning )
     {
@@ -61,63 +76,65 @@ void ofxSimpleTimer::draw( float x , float y )
     ofDrawBitmapStringHighlight( debugString , x , y ) ; 
 }
 
-void ofxSimpleTimer::start( bool _bLoop , bool bForceReset )
-{
+//----------------------------------------------------------------------------
+void ofxSimpleTimer::start( bool _bLoop , bool bForceReset ) {
 	//ofLog( OF_LOG_VERBOSE , "ofxSimpleTimer::start() " ) ;
 
     //We don't want to start the timer if it's already running
     bool bStartTimer = !bIsRunning ;
    	 
     //Unless we specifically want it too
-    if ( bForceReset == true )
+    if ( bForceReset == true ) {
         bStartTimer = true ;
+    }
     
-    if ( bStartTimer == true )
-    {
-	
+    if ( bStartTimer == true ) {
         bIsRunning = true ;
 		bIsPaused = false;
         startTimeMillis = ofGetElapsedTimeMillis() ;
         bLoop = _bLoop ;
-        int args = 18 ;
-        ofNotifyEvent( TIMER_STARTED , args ) ;
+
+        ofNotifyEvent( TIMER_STARTED , argsTimer ) ;
         //ofLog( OF_LOG_VERBOSE , name + " ofxSimpleTimer::start() " ) ;
     }
 }
 
-void ofxSimpleTimer::stop( ) 
-{
+//----------------------------------------------------------------------------
+void ofxSimpleTimer::stop() {
    //We don't want to start the timer if it's already running
    //if ( bIsRunning == true ) 
 	//	ofLog( OF_LOG_VERBOSE , "ofxSimpleTimer::stop() " ) ;
 	
 	bIsRunning = false ; 
 	bIsPaused = false;
-
-
-   
 }
-void ofxSimpleTimer::togglePause(){
-	cout << "is timer running? " << bIsRunning << ":" << bIsPaused << endl;
-	if (bIsRunning)
-		bIsPaused = !bIsPaused;
 
-	if (bIsPaused){
-		pauseTimeOffset = ofGetElapsedTimeMillis() - startTimeMillis;
-        int args = 18 ;
-         ofNotifyEvent( TIMER_PAUSED , args ) ;
+//----------------------------------------------------------------------------
+void ofxSimpleTimer::togglePause() {
+	cout << "is timer running? " << bIsRunning << ":" << bIsPaused << endl;
+    
+    if (bIsRunning) {
+		bIsPaused = !bIsPaused;
     }
 
-	if (!bIsPaused)
+	if (bIsPaused) {
+		pauseTimeOffset = ofGetElapsedTimeMillis() - startTimeMillis;
+        ofNotifyEvent( TIMER_PAUSED , argsTimer) ;
+    }
+
+    if (!bIsPaused) {
 		startTimeMillis = ofGetElapsedTimeMillis() - pauseTimeOffset;
+    }
 
 	cout << "is timer running? " << bIsRunning << ":" << bIsPaused << endl;
 	cout << "timing: " << ofGetElapsedTimeMillis() << ":" << startTimeMillis << endl;
 }
 
-float ofxSimpleTimer::getNormalizedProgress ( )  
-{
-	if ( !bIsRunning ) return 0.0f ; 
+//----------------------------------------------------------------------------
+float ofxSimpleTimer::getNormalizedProgress ( ) {
+    if ( !bIsRunning ) {
+        return 0.0f ;
+    }
 
 	float nDiff = delayMillis - (ofGetElapsedTimeMillis() - startTimeMillis) ;
 	float percent = (float)nDiff / (float)delayMillis ; 
